@@ -1,13 +1,30 @@
-cxx = g++
-ld = g++
-cxx_flags = -std=c++23 -O2 -fsanitize=address,undefined
+CXX = g++
+LD = g++
+CXXFLAGS = -std=c++23 -O2 -fsanitize=address,undefined
 
-exec = task_1/task_1
+TASKS = $(wildcard task_*)
 
-all: $(exec)
+define TASK_rule
+exec_$(1) := T_$(patsubst task_%,%,$(1))
+sources_$(1) := $(wildcard $(1)/*.cpp)
+headers_$(1) := $(wildcard $(1)/*.hpp)
 
-#clean:
-#	rm -rf $(exec)
+$$(exec_$(1)): $$(sources_$(1)) $$(headers_$(1))
+	$$(CXX) $$(sources_$(1)) $$(CXXFLAGS) -o $$@
+endef
 
-task1: task_1/avl.cpp task_1/test.cpp task_1/avl.hpp
-	$(cxx) $^ $(cxx_flags) -o $@
+$(foreach task,$(TASKS),$(eval $(call TASK_rule,$(task))))
+
+EXECS = $(foreach task,$(TASKS),T_$(patsubst task_%,%,$(task)))
+
+all: $(EXECS)
+
+NUMBERS = $(patsubst task_%,%,$(TASKS))
+.PHONY: $(NUMBERS)
+$(NUMBERS): %: T_%
+	@#
+
+clean:
+	rm -f $(EXECS)
+
+.PHONY: all clean
