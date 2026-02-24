@@ -57,7 +57,7 @@ void case3() {
     avl->insert(30);
     avl->insert(2);
     avl->insert(7);
-    avl->insert(11);
+    avl->insert(11); 
     assert(eq_vectors(avl->serialize(), std::vector<std::string>{"20", "4", "3", "2", "null", "null", "null", "9", "7", "null", "null", "11", "null", "null", "26", "21", "null", "null", "30", "null", "null"
 }));
     avl->insert(15);
@@ -66,10 +66,52 @@ void case3() {
     return;
 }
 
+void case4() {
+    AVL* avl = new AVL;
+    avl->insert(20);
+    avl->insert(4);
+    avl->insert(26);
+    avl->insert(3);
+    avl->insert(9);
+    avl->insert(21);
+    avl->insert(30);
+    avl->insert(2);
+    avl->insert(7);
+    avl->insert(11); 
+    avl->insert(15);
+    assert(eq_vectors(avl->serialize(), std::vector<std::string>{"9", "4", "3", "2", "null", "null", "null", "7", "null", "null", "20", "11", "null", "15", "null", "null", "26", "21", "null", "null", "30", "null", "null"}));
+    avl->remove(21);
+    assert(eq_vectors(avl->serialize(), std::vector<std::string>{"9", "4", "3", "2", "null", "null", "null", "7", "null", "null", "20", "11", "null", "15", "null", "null", "26", "null", "30", "null", "null"}));
+    avl->remove(7);
+    assert(eq_vectors(avl->serialize(), std::vector<std::string>{"9", "3", "2", "null", "null", "4", "null", "null", "20", "11", "null", "15", "null", "null", "26", "null", "30", "null", "null"}));
+    delete avl;
+}
+
+void case5() {
+    AVL* avl1 = new AVL;
+    avl1->insert(20);
+    avl1->insert(4);
+    avl1->insert(26);
+    avl1->insert(3);
+    avl1->insert(9);
+    avl1->insert(21);
+    avl1->insert(30);
+    avl1->insert(2);
+    avl1->insert(7);
+    avl1->insert(11); 
+    avl1->insert(15);
+    AVL& avl1_ref = *avl1;
+    AVL avl2 = avl1_ref;
+    assert(avl1->equals(avl2));
+    delete avl1;
+}
+
 
 int main() {
     case1();
     case2();
     case3();
+    case4();
+    case5();
 }
 

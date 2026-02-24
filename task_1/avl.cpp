@@ -1,7 +1,7 @@
 #include "avl.hpp"
 #include <algorithm>
 
-Node::Node(int key) {
+AVL::Node::Node(int key) {
           key_ = key;
           value_ = key;
           height_ = 1;
@@ -10,13 +10,13 @@ Node::Node(int key) {
 }
 
 
-Node::~Node() {}
+AVL::Node::~Node() {}
 
-void Node::update() {
+void AVL::Node::update() {
     height_ = 1 + std::max(left_ != nullptr ? left_->height_ : 0, right_!= nullptr ? right_->height_ : 0);
 }
 
-int Node::balance_factor() {
+int AVL::Node::balance_factor() {
     return (left_ != nullptr ? left_->height_ : 0) - (right_ != nullptr ? right_->height_ : 0);
 }
 
@@ -28,6 +28,38 @@ AVL::~AVL() {
     destruct_(root_);
 }
 
+void AVL::copy_(AVL& this_, AVL::Node* node) {
+    if (node) {
+        copy_(this_, node->left_);
+        this_.insert(node->key_);
+        copy_(this_, node->right_);
+    }
+}
+
+AVL::AVL(const AVL& other) : root_(nullptr) {
+    copy_(*this, other.root_);
+}
+
+AVL::AVL(AVL&& other) {
+    this->root_ = other.root_;
+    other.root_ = nullptr;
+}
+
+AVL& AVL::operator=(const AVL& other) {
+    AVL tree{other};
+    std::swap(root_, tree.root_);
+    return *this;
+}
+
+AVL& AVL::operator=(AVL&& other) {
+    if (this != &other) {
+        destruct_(root_);
+        root_ = other.root_;
+        other.root_ = nullptr;
+    }
+    return *this;
+}
+
 void AVL::destruct_(Node* node) {
         if (node) {
             destruct_(node->left_);
@@ -36,7 +68,7 @@ void AVL::destruct_(Node* node) {
         }
     }
 
-Node* AVL::insert_(Node* node, Node* new_node) {
+AVL::Node* AVL::insert_(Node* node, Node* new_node) {
     if (!node) {
         return balance_(new_node); 
     }
@@ -49,7 +81,7 @@ Node* AVL::insert_(Node* node, Node* new_node) {
     return balance_(node);
 }
 
-Node* AVL::balance_(Node* node) {
+AVL::Node* AVL::balance_(Node* node) {
     if (!node) {
         return node;
     }
@@ -68,7 +100,7 @@ Node* AVL::balance_(Node* node) {
     return node;
 }
 
-Node* AVL::right_rotate_(Node* node) {
+AVL::Node* AVL::right_rotate_(Node* node) {
     Node* y = node->left_;
     Node* B = y->right_;
     y->right_ = node;
@@ -78,7 +110,7 @@ Node* AVL::right_rotate_(Node* node) {
     return y;
 }
 
-Node* AVL::left_rotate_(Node* node) {
+AVL::Node* AVL::left_rotate_(Node* node) {
     Node* y = node->right_;
     Node* B = y->left_;
     node->right_ = B;
@@ -88,7 +120,7 @@ Node* AVL::left_rotate_(Node* node) {
     return y;
 }
 
-Node* AVL::remove_(Node* node, int key) {
+AVL::Node* AVL::remove_(Node* node, int key) {
     if (!node) {
         return node;
     }
@@ -116,7 +148,7 @@ Node* AVL::remove_(Node* node, int key) {
     return balance_(node);
 }
 
-Node* AVL::min_node_(Node* node) {
+AVL::Node* AVL::min_node_(Node* node) {
     Node* current = node;
     while (current->left_) {
         current = current->left_;
@@ -132,7 +164,18 @@ void AVL::remove(int key) {
     root_ = remove_(root_, key);
 }
 
-int AVL::value_or(int key, int default_) {
+bool AVL::equals(const AVL& other) {
+    return tree_compare_(this->root_, other);
+}
+
+bool AVL::tree_compare_(AVL::Node* node, const AVL& other) {
+    if (node) {
+        return (bool) other.value_or(node->key_, 0) && tree_compare_(node->left_, other) && tree_compare_(node->right_, other);
+    }
+    return true;
+}
+
+int AVL::value_or(int key, int default_) const {
     Node* current = root_;
     while (current != nullptr) {
         if (key < current->key_) {
