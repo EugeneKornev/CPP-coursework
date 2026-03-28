@@ -1,8 +1,6 @@
 #include "avl.hpp"
 #include <algorithm>
 
-#include <iostream>
-
 AVL::Node::Node(int key) {
           key_ = key;
           value_ = key;
@@ -39,29 +37,21 @@ void AVL::copy_(AVL& this_, AVL::Node* node) {
 }
 
 AVL::AVL(const AVL& other) : root_(nullptr) {
-    // TODO 
-    std::cout << "CopyCtr" << std::endl;
     copy_(*this, other.root_);
 }
 
 AVL::AVL(AVL&& other) {
-    // TODO
-    std::cout << "MoveCtr" << std::endl;
     this->root_ = other.root_;
     other.root_ = nullptr;
 }
 
 AVL& AVL::operator=(const AVL& other) {
-    // TODO
-    std::cout << "CopyAss" << std::endl;
     AVL tree{other};
     std::swap(root_, tree.root_);
     return *this;
 }
 
 AVL& AVL::operator=(AVL&& other) {
-    // TODO
-    std::cout << "MoveAss" << std::endl;
     if (this != &other) {
         destruct_(root_);
         root_ = other.root_;
