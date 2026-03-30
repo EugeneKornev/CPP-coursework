@@ -38,11 +38,11 @@ bool eq_sets_from_vectors(const std::vector<std::string>& v1, const std::vector<
 }
 
 TEST(AVL, RightRotate) {
-    AVL* avl = new AVL;
-    avl->insert(20);
-    avl->insert(4);
+    AVL<int>* avl = new AVL<int>;
+    avl->insert(20, 21);
+    avl->insert(4, 5);
     ASSERT_TRUE(eq_vectors(avl->serialize(), std::vector<std::string>({"20", "4", "null", "null", "null"})));
-    avl->insert(15);
+    avl->insert(15, 16);
     ASSERT_TRUE(eq_vectors(avl->serialize(), std::vector<std::string>{"15", "4", "null", "null", "20", "null", "null"}));
     delete avl;
     return;
@@ -50,52 +50,52 @@ TEST(AVL, RightRotate) {
 }
 
 TEST(AVL, BigRightRotate) {
-    AVL* avl = new AVL;
-    avl->insert(20);
-    avl->insert(26);
-    avl->insert(4);
-    avl->insert(3);
-    avl->insert(9);
+    AVL<int>* avl = new AVL<int>;
+    avl->insert(20, 21);
+    avl->insert(26, 27);
+    avl->insert(4, 5);
+    avl->insert(3, 4);
+    avl->insert(9, 10);
     ASSERT_TRUE(eq_vectors(avl->serialize(), std::vector<std::string>{"20", "4", "3", "null", "null", "9", "null", "null", "26", "null", "null"}));
-    avl->insert(15);
+    avl->insert(15, 16);
     ASSERT_TRUE(eq_vectors(avl->serialize(), std::vector<std::string>{"9", "4", "3", "null", "null", "null", "20", "15", "null", "null", "26", "null", "null"}));
     delete avl;
     return;
 }
 
 TEST(AVL, BigRightRotate2) {
-    AVL* avl = new AVL;
-    avl->insert(20);
-    avl->insert(4);
-    avl->insert(26);
-    avl->insert(3);
-    avl->insert(9);
-    avl->insert(21);
-    avl->insert(30);
-    avl->insert(2);
-    avl->insert(7);
-    avl->insert(11); 
+    AVL<int>* avl = new AVL<int>;
+    avl->insert(20, 21);
+    avl->insert(4, 5);
+    avl->insert(26, 27);
+    avl->insert(3, 4);
+    avl->insert(9, 10);
+    avl->insert(21, 22);
+    avl->insert(30, 31);
+    avl->insert(2, 3);
+    avl->insert(7, 8);
+    avl->insert(11, 12); 
     ASSERT_TRUE(eq_vectors(avl->serialize(), std::vector<std::string>{"20", "4", "3", "2", "null", "null", "null", "9", "7", "null", "null", "11", "null", "null", "26", "21", "null", "null", "30", "null", "null"
 }));
-    avl->insert(15);
+    avl->insert(15, 16);
     ASSERT_TRUE(eq_vectors(avl->serialize(), std::vector<std::string>{"9", "4", "3", "2", "null", "null", "null", "7", "null", "null", "20", "11", "null", "15", "null", "null", "26", "21", "null", "null", "30", "null", "null"}));
     delete avl;
     return;
 }
 
 TEST(AVL, Remove) {
-    AVL* avl = new AVL;
-    avl->insert(20);
-    avl->insert(4);
-    avl->insert(26);
-    avl->insert(3);
-    avl->insert(9);
-    avl->insert(21);
-    avl->insert(30);
-    avl->insert(2);
-    avl->insert(7);
-    avl->insert(11); 
-    avl->insert(15);
+    AVL<int>* avl = new AVL<int>;
+    avl->insert(20, 21);
+    avl->insert(4, 5);
+    avl->insert(26, 27);
+    avl->insert(3, 4);
+    avl->insert(9, 10);
+    avl->insert(21, 22);
+    avl->insert(30, 31);
+    avl->insert(2, 3);
+    avl->insert(7, 8);
+    avl->insert(11, 12); 
+    avl->insert(15, 16);
     ASSERT_TRUE(eq_vectors(avl->serialize(), std::vector<std::string>{"9", "4", "3", "2", "null", "null", "null", "7", "null", "null", "20", "11", "null", "15", "null", "null", "26", "21", "null", "null", "30", "null", "null"}));
     avl->remove(21);
     ASSERT_TRUE(eq_vectors(avl->serialize(), std::vector<std::string>{"9", "4", "3", "2", "null", "null", "null", "7", "null", "null", "20", "11", "null", "15", "null", "null", "26", "null", "30", "null", "null"}));
@@ -106,19 +106,19 @@ TEST(AVL, Remove) {
 }
 
 TEST(AVL, CopyCtr) {
-    AVL* avl1 = new AVL;
-    avl1->insert(20);
-    avl1->insert(4);
-    avl1->insert(26);
-    avl1->insert(3);
-    avl1->insert(9);
-    avl1->insert(21);
-    avl1->insert(30);
-    avl1->insert(2);
-    avl1->insert(7);
-    avl1->insert(11); 
-    avl1->insert(15); 
-    AVL& avl1_ref = *avl1;
+    AVL<int>* avl1 = new AVL<int>;
+    avl1->insert(20, 21);
+    avl1->insert(4, 5);
+    avl1->insert(26, 27);
+    avl1->insert(3, 4);
+    avl1->insert(9, 10);
+    avl1->insert(21, 22);
+    avl1->insert(30, 31);
+    avl1->insert(2, 3);
+    avl1->insert(7, 8);
+    avl1->insert(11, 12); 
+    avl1->insert(15, 16);
+    AVL<int>& avl1_ref = *avl1;
     AVL avl2 = avl1_ref;
     ASSERT_TRUE(avl1->equals(avl2));
     delete avl1;
@@ -126,68 +126,68 @@ TEST(AVL, CopyCtr) {
 
 
 TEST(AVL, CopyAssignOper) {
-    AVL avl1;
-    avl1.insert(20);
-    avl1.insert(4);
-    avl1.insert(26);
-    avl1.insert(3);
-    avl1.insert(9);
-    avl1.insert(21);
-    avl1.insert(30);
-    avl1.insert(2);
-    avl1.insert(7);
-    avl1.insert(11); 
-    avl1.insert(15);
-    AVL avl2;
-    avl2.insert(20);
-    avl2.insert(26);
-    avl2.insert(4);
-    avl2.insert(3);
-    avl2.insert(9);
-    avl2.insert(15);
+    AVL<int> avl1;
+    avl1.insert(20, 21);
+    avl1.insert(4, 5);
+    avl1.insert(26, 27);
+    avl1.insert(3, 4);
+    avl1.insert(9, 10);
+    avl1.insert(21, 22);
+    avl1.insert(30, 31);
+    avl1.insert(2, 3);
+    avl1.insert(7, 8);
+    avl1.insert(11, 12); 
+    avl1.insert(15, 16);
+    AVL<int> avl2;
+    avl2.insert(20, 21);
+    avl2.insert(26, 27);
+    avl2.insert(4, 5);
+    avl2.insert(3, 4);
+    avl2.insert(9, 10);
+    avl2.insert(15, 16);
     avl2 = avl1;
     ASSERT_TRUE(avl1.equals(avl2));
 }
 
 
 TEST(AVL, MoveCtr) {
-    AVL avl1;
-    avl1.insert(20);
-    avl1.insert(4);
-    avl1.insert(26);
-    avl1.insert(3);
-    avl1.insert(9);
-    avl1.insert(21);
-    avl1.insert(30);
-    avl1.insert(2);
-    avl1.insert(7);
-    avl1.insert(11); 
-    avl1.insert(15);
+    AVL<int> avl1;
+    avl1.insert(20, 21);
+    avl1.insert(4, 5);
+    avl1.insert(26, 27);
+    avl1.insert(3, 4);
+    avl1.insert(9, 10);
+    avl1.insert(21, 22);
+    avl1.insert(30, 31);
+    avl1.insert(2, 3);
+    avl1.insert(7, 8);
+    avl1.insert(11, 12); 
+    avl1.insert(15, 16);
     AVL avl2(avl1);
     ASSERT_TRUE(eq_sets_from_vectors(avl1.serialize(), avl2.serialize()));
 }
 
 
 TEST(AVL, MoveAssignOper) {
-    AVL avl1;
-    avl1.insert(20);
-    avl1.insert(4);
-    avl1.insert(26);
-    avl1.insert(3);
-    avl1.insert(9);
-    avl1.insert(21);
-    avl1.insert(30);
-    avl1.insert(2);
-    avl1.insert(7);
-    avl1.insert(11); 
-    avl1.insert(15);
-    AVL avl2;
-    avl2.insert(20);
-    avl2.insert(26);
-    avl2.insert(4);
-    avl2.insert(3);
-    avl2.insert(9);
-    avl2.insert(15);
+    AVL<int> avl1;
+    avl1.insert(20, 21);
+    avl1.insert(4, 5);
+    avl1.insert(26, 27);
+    avl1.insert(3, 4);
+    avl1.insert(9, 10);
+    avl1.insert(21, 22);
+    avl1.insert(30, 31);
+    avl1.insert(2, 3);
+    avl1.insert(7, 8);
+    avl1.insert(11, 12); 
+    avl1.insert(15, 16);
+    AVL<int> avl2;
+    avl2.insert(20, 21);
+    avl2.insert(26, 27);
+    avl2.insert(4, 5);
+    avl2.insert(3, 4);
+    avl2.insert(9, 10);
+    avl2.insert(15, 16);
     avl2 = std::move(avl1);
     ASSERT_TRUE(eq_vectors(avl1.serialize(), std::vector<std::string>({"null"})));
 }
