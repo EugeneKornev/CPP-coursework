@@ -21,7 +21,7 @@ struct LimitedAmountOfInstances {
     static unsigned int objects;
 
     LimitedAmountOfInstances() {
-        if (++objects >= instancesCount) {
+        if (objects >= instancesCount) {
             throw TooMuchInstances(instancesCount);
         }
         objects++;
@@ -39,6 +39,9 @@ struct LimitedAmountOfInstances {
     }
 
     LimitedAmountOfInstances(LimitedAmountOfInstances&& other) {
+        if (objects > instancesCount) {
+            throw TooMuchInstances(objects);
+        }
         objects++;
     }
 
@@ -53,15 +56,19 @@ struct LimitedAmountOfInstances {
 
 template <class Derived, unsigned int instancesCount> unsigned int LimitedAmountOfInstances<Derived, instancesCount>::objects = 0;
 
-template <class Derived>
-using Singleton = LimitedAmountOfInstances<Derived, 1>;
+
+template <typename T, typename U, unsigned int countOfInstances>
+struct nInstancesPair : public LimitedAmountOfInstances<nInstancesPair<T, U, countOfInstances>, countOfInstances> {
+    T first;
+    U second;
+
+    nInstancesPair(T f, U s) : first(f), second(s) {}
+};
 
 
 template <typename T, typename U>
-struct SingletonPair : Singleton<SingletonPair<T, U>> {
-  T first;
-  U second;
+using SingletonPair = nInstancesPair<T, U, 1>;
 
-  SingletonPair(T f, U s) : first(f), second(s) {}
-};
+template <typename T, typename U>
+using DoubletonPair = nInstancesPair<T, U, 2>;
 
