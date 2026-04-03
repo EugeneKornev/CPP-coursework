@@ -1,6 +1,6 @@
 CXX = g++
 LD = g++
-CXXFLAGS = -std=c++23 -O2 -fsanitize=address,undefined
+CXXFLAGS = -std=c++23 -O2 -fsanitize=address,undefined -lgtest -lgtest_main -pthread -g
 
 TASKS = $(wildcard task_*)
 
