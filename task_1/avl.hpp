@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <string>
+#include <queue>
 
 template <typename T>
 class AVL{
@@ -14,7 +15,7 @@ class AVL{
             destruct_(root_);
         }
     
-        AVL(const AVL& other) : root_(copy_(other.root_)) {}
+        AVL(const AVL& other) : root_(copy_(other.root_, nullptr)) {}
     
         AVL(AVL&& other) {
             this->root_ = other.root_;
@@ -37,7 +38,7 @@ class AVL{
         }
 
         void insert(int key, T value) {
-            root_ = insert_(root_, new Node{key, value});
+            root_ = insert_(root_, new Node{key, value, nullptr});
         }
 
         
@@ -54,7 +55,7 @@ class AVL{
                 } else if (key > current->key_) {
                     current = current->right_;
                 } else {
-                    return current->key_;
+                    return current->value_;
                 }
             }
             return default_;
@@ -76,14 +77,16 @@ class AVL{
             T value_;
             Node* left_;
             Node* right_;
+            Node* parent_;
             int height_;
 
-            Node(int key, T value) {
+            Node(int key, T value, Node* parent) {
                 key_ = key;
                 value_ = value;
                 height_ = 1;
                 left_ = nullptr;
                 right_ = nullptr;
+                parent_ = parent;
             }
     
             ~Node() {}
@@ -99,6 +102,68 @@ class AVL{
         };
 
         Node* root_;
+
+    public:
+
+        class iterator {
+        private:
+            std::queue<T> nodes;
+
+            void make_list(Node* node) {
+                if (node) {
+                    make_list(node->left_);
+                    nodes.push(node->value_);
+                    make_list(node->right_);
+                }
+            }
+        public:
+
+            iterator(Node* node) {
+                make_list(node);
+            }
+
+            iterator() {}
+
+            bool operator==(const iterator other) const {
+                if (nodes.empty() && other.nodes.empty()) {
+                    return true;
+                } else if (nodes.empty() || other.nodes.empty()) {
+                    return false;
+                } else {
+                    return nodes.front() == other.nodes.front();
+                }
+            }
+
+
+            bool operator!=(const iterator other) const {
+                return !(*this == other);
+            }
+
+            iterator& operator++() {
+                nodes.pop();
+                return *this;
+            }
+
+            iterator& operator++(int) {
+                nodes.pop();
+                return *this;
+            }
+
+            T& operator*() {
+                return nodes.front();
+            }
+            
+        };
+
+        iterator begin() {
+            return iterator(root_);;
+        }
+
+        iterator end() {
+            return iterator(nullptr);
+        }
+
+    private:
 
         bool tree_compare_(Node* node, const AVL& other) {
             if (node) {
@@ -117,14 +182,14 @@ class AVL{
         }
     
         
-        Node* copy_(Node* node) {
+        Node* copy_(Node* node, Node* parent) {
             if (node == nullptr) {
                 return nullptr;
             }
-            Node* new_node = new Node(node->key_, node->value_);
+            Node* new_node = new Node(node->key_, node->value_, parent);
             new_node->height_ = node->height_;
-            new_node->left_ = copy_(node->left_);
-            new_node->right_ = copy_(node->right_);
+            new_node->left_ = copy_(node->left_, new_node);
+            new_node->right_ = copy_(node->right_, new_node);
             return new_node;
         }
 
@@ -135,11 +200,24 @@ class AVL{
             }
             if (new_node->key_ < node->key_) {
                 node->left_ = insert_(node->left_, new_node);
+                if (node->left_) {
+                    node->left_->parent_ = node;
+                }
             } else if (new_node->key_ > node->key_) {
                 node->right_ = insert_(node->right_, new_node);
+                if (node->right_) {
+                    node->right_->parent_ = node;
+                }
+            } else {
+                delete new_node;
+                return node;
             }
             node->update();
-            return balance_(node);
+            Node* new_root = balance_(node);
+            if (new_root != node) {
+                new_root->parent_ = node->parent_;
+            }
+            return new_root;
         }
     
         Node* balance_(Node* node) {
@@ -162,22 +240,38 @@ class AVL{
         }
     
         Node* right_rotate_(Node* node) {
-            Node* y = node->left_;
-            Node* B = y->right_;
-            y->right_ = node;
-            node->left_ = B;
-            node->update();
-            y->update();
+            Node* y = node->left_; // b
+            Node* B = y->right_; // C
+
+            y->parent_ = node->parent_;
+            node->parent_ = y;
+            if (B) {
+                B->parent_ = node;
+            }
+
+
+
+            y->right_ = node; // b.right = a
+            node->left_ = B; // a.left = C
+            node->update(); // a.update()
+            y->update(); // b.update()
             return y;
         }
     
         Node* left_rotate_(Node* node) {
-            Node* y = node->right_;
-            Node* B = y->left_;
-            node->right_ = B;
-            y->left_ = node;
-            node->update();
-            y->update();
+            Node* y = node->right_; // b
+            Node* B = y->left_; // C
+
+            y->parent_ = node->parent_;
+            node->parent_ = y;
+            if (B) {
+                B->parent_ = node;
+            }
+
+            node->right_ = B; // a.right = C
+            y->left_ = node; // b.left = a
+            node->update(); // a.update()
+            y->update(); // b.update()
             return y;
         }
 
@@ -188,16 +282,28 @@ class AVL{
             }
             if (key < node->key_) {
                 node->left_ = remove_(node->left_, key);
+                if (node->left_) {
+                    node->left_->parent_ = node;
+                }
             } else if (key > node->key_) {
                 node->right_ = remove_(node->right_, key);
+                if (node->right_) {
+                    node->right_->parent_ = node;
+                }
             } else {
                 if (!node->left_) {
                     Node* right_child = node->right_;
+                    if (right_child) {
+                        right_child->parent_ = node->parent_;
+                    }
                     delete node; 
                     return right_child;
                 }
                 if (!node->right_) {
                     Node* left_child = node->left_;
+                    if (left_child) {
+                        left_child->parent_ = node->parent_;
+                    }
                     delete node;
                     return left_child;
                 }
@@ -207,7 +313,11 @@ class AVL{
                 node->right_ = remove_(node->right_, temp->key_);
             }
             node->update();
-            return balance_(node);
+            Node* new_root = balance_(node);
+            if (new_root != node) {
+                new_root->parent_ = node->parent_;
+            }
+            return new_root;
         }
 
     
@@ -217,8 +327,10 @@ class AVL{
                 current = current->left_;
             }
             return current;
-            }
-            std::vector<std::string> serialize_(Node* node) {
+        }
+
+            
+        std::vector<std::string> serialize_(Node* node) {
             if (node == nullptr) {
                 return std::vector<std::string>{"null"};
             }

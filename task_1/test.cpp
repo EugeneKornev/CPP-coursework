@@ -1,4 +1,5 @@
 #include "avl.hpp"
+#include <cstdlib>
 #include <iostream>
 #include <cassert>
 #include <gtest/gtest.h>
@@ -190,6 +191,33 @@ TEST(AVL, MoveAssignOper) {
     avl2.insert(15, 16);
     avl2 = std::move(avl1);
     ASSERT_TRUE(eq_vectors(avl1.serialize(), std::vector<std::string>({"null"})));
+}
+
+
+TEST(AVL, Iterator) {
+    AVL<int> avl1;
+    avl1.insert(20, 21);
+    avl1.insert(4, 5);
+    avl1.insert(26, 27);
+    avl1.insert(3, 4);
+    avl1.insert(9, 10);
+    avl1.insert(21, 22);
+    avl1.insert(30, 31);
+    avl1.insert(2, 3);
+    avl1.insert(7, 8);
+    avl1.insert(11, 12); 
+    avl1.insert(15, 16);
+    // print(avl1.serialize());
+    std::vector<int> tree;
+    for (auto& a : avl1.serialize()) {
+        if (a != "null") {
+            tree.push_back(std::stoi(a));
+        }
+    }
+    int i = 0;
+    for (auto it = avl1.begin(); it != avl1.end(); it++) {
+        std::cout << *it << std::endl;
+    }
 }
 
 
