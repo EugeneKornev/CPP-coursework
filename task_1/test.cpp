@@ -182,6 +182,7 @@ TEST(AVL, MoveAssignOper) {
     avl1.insert(7, 8);
     avl1.insert(11, 12); 
     avl1.insert(15, 16);
+    std::vector<std::string> avl1_tree = avl1.serialize():
     AVL<int> avl2;
     avl2.insert(20, 21);
     avl2.insert(26, 27);
@@ -190,6 +191,11 @@ TEST(AVL, MoveAssignOper) {
     avl2.insert(9, 10);
     avl2.insert(15, 16);
     avl2 = std::move(avl1);
+    for (int i = 0; i < avl1_tree.size(); i++) {
+        if (avl1_tree[i] != "null") {
+            ASSERT_TRUE(avl2.value_or(std::stoi(avl1_tree[i]), -1) != -1));
+        }
+    }
     ASSERT_TRUE(eq_vectors(avl1.serialize(), std::vector<std::string>({"null"})));
 }
 
