@@ -145,8 +145,9 @@ class AVL{
             }
 
             iterator& operator++(int) {
+                auto tmp = this;
                 nodes.pop();
-                return *this;
+                return *tmp;
             }
 
             T& operator*() {
