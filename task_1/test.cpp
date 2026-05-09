@@ -227,6 +227,12 @@ TEST(AVL, Iterator) {
 }
 
 
+TEST(AVL, InitList) {
+    AVL<float> avl1 = {{12, 34.56f}, {78, 910.23f}};
+    ASSERT_TRUE(avl1.value_or(12, 0.0f) == 34.56f);
+    ASSERT_TRUE(avl1.value_or(78, 0.0f) == 910.23f);
+}
+
 int main() {
     testing::InitGoogleTest();
     bool s = RUN_ALL_TESTS();

@@ -2,43 +2,47 @@
 #include <vector>
 #include <string>
 #include <queue>
+#include <memory>
+#include <initializer_list>
+#include <utility>
 
 template <typename T>
 class AVL{
     public:
     
-        AVL() {
-            root_ = nullptr;
+        AVL() : root_(nullptr) {}
+
+        AVL(std::initializer_list<std::pair<int, T>> init_list) : root_(nullptr) {
+            for (const auto& i : init_list) {
+                insert(i.first, i.second);
+            }
         }
     
-        ~AVL() {
-            destruct_(root_);
-        }
+        ~AVL() = default;
     
-        AVL(const AVL& other) : root_(copy_(other.root_, nullptr)) {}
+        AVL(const AVL& other) : root_(copy_(other.root_, std::shared_ptr<Node>(nullptr))) {}
     
         AVL(AVL&& other) {
-            this->root_ = other.root_;
-            other.root_ = nullptr;
+            root_ = std::move(other.root_);
         }
     
         AVL& operator=(const AVL& other) {
-            AVL tree{other};
-            std::swap(root_, tree.root_);
+            if (this != &other) {
+                AVL temp{other};
+                std::swap(root_, temp.root_);
+            }
             return *this;
-
         }
+
         AVL& operator=(AVL&& other) {
             if (this != &other) {
-                destruct_(root_);
-                root_ = other.root_;
-                other.root_ = nullptr;
+                root_ = std::move(other.root_);
             }
             return *this;
         }
 
         void insert(int key, T value) {
-            root_ = insert_(root_, new Node{key, value, nullptr});
+            root_ = insert_(root_, key, value, nullptr);
         }
 
         
@@ -48,7 +52,7 @@ class AVL{
 
         
         T value_or(int key, T default_) const {
-            Node* current = root_;
+            std::shared_ptr<Node> current = root_;
             while (current != nullptr) {
                 if (key < current->key_) {
                     current = current->left_;
@@ -75,24 +79,19 @@ class AVL{
         struct Node {
             int key_;
             T value_;
-            Node* left_;
-            Node* right_;
-            Node* parent_;
+            std::shared_ptr<Node> left_;
+            std::shared_ptr<Node> right_;
+            std::weak_ptr<Node> parent_;
             int height_;
 
-            Node(int key, T value, Node* parent) {
-                key_ = key;
-                value_ = value;
-                height_ = 1;
-                left_ = nullptr;
-                right_ = nullptr;
-                parent_ = parent;
-            }
+            Node(int key, T value, std::shared_ptr<Node> parent) :
+             key_(key), value_(value), parent_(parent), height_(1) {}
     
-            ~Node() {}
+            ~Node() = default;
     
             void update() {
-                height_ = 1 + std::max(left_ != nullptr ? left_->height_ : 0, right_!= nullptr ? right_->height_ : 0);
+                height_ = 1 + std::max(left_ != nullptr ? left_->height_ : 0,
+                                     right_!= nullptr ? right_->height_ : 0);
             }
     
             int balance_factor() {
@@ -101,7 +100,7 @@ class AVL{
     
         };
 
-        Node* root_;
+        std::shared_ptr<Node> root_;
 
     public:
 
@@ -109,7 +108,7 @@ class AVL{
         private:
             std::queue<T> nodes;
 
-            void make_list(Node* node) {
+            void make_list(std::shared_ptr<Node> node) {
                 if (node) {
                     make_list(node->left_);
                     nodes.push(node->value_);
@@ -118,7 +117,7 @@ class AVL{
             }
         public:
 
-            iterator(Node* node) {
+            iterator(std::shared_ptr<Node> node) {
                 make_list(node);
             }
 
@@ -144,10 +143,10 @@ class AVL{
                 return *this;
             }
 
-            iterator& operator++(int) {
-                auto tmp = this;
+            iterator operator++(int) {
+                iterator tmp = *this;
                 nodes.pop();
-                return *tmp;
+                return tmp;
             }
 
             T& operator*() {
@@ -166,28 +165,19 @@ class AVL{
 
     private:
 
-        bool tree_compare_(Node* node, const AVL& other) {
+        bool tree_compare_(std::shared_ptr<Node> node, const AVL& other) {
             if (node) {
                 return (bool) other.value_or(node->key_, 0) && tree_compare_(node->left_, other) && tree_compare_(node->right_, other);
             }
             return true;
         }
-
-        
-        void destruct_(Node* node) {
-            if (node) {
-                destruct_(node->left_);
-                destruct_(node->right_);
-                delete node;
-            }
-        }
     
         
-        Node* copy_(Node* node, Node* parent) {
+        std::shared_ptr<Node> copy_(std::shared_ptr<Node> node, std::shared_ptr<Node> parent) {
             if (node == nullptr) {
                 return nullptr;
             }
-            Node* new_node = new Node(node->key_, node->value_, parent);
+            auto new_node = std::make_shared<Node>(node->key_, node->value_, parent);
             new_node->height_ = node->height_;
             new_node->left_ = copy_(node->left_, new_node);
             new_node->right_ = copy_(node->right_, new_node);
@@ -195,43 +185,33 @@ class AVL{
         }
 
         
-        Node* insert_(Node* node, Node* new_node) {
+        std::shared_ptr<Node> insert_(std::shared_ptr<Node> node, int key, T value, std::shared_ptr<Node> parent) {
             if (!node) {
-                return balance_(new_node); 
+                return std::make_shared<Node>(key, value, parent);
             }
-            if (new_node->key_ < node->key_) {
-                node->left_ = insert_(node->left_, new_node);
-                if (node->left_) {
-                    node->left_->parent_ = node;
-                }
-            } else if (new_node->key_ > node->key_) {
-                node->right_ = insert_(node->right_, new_node);
-                if (node->right_) {
-                    node->right_->parent_ = node;
-                }
+            if (key < node->key_) {
+                node->left_ = insert_(node->left_, key, value, node);
+            } else if (key > node->key_) {
+                node->right_ = insert_(node->right_, key, value, node);
             } else {
-                delete new_node;
+                node->value_ = value; 
                 return node;
             }
+
             node->update();
-            Node* new_root = balance_(node);
-            if (new_root != node) {
-                new_root->parent_ = node->parent_;
-            }
-            return new_root;
+            return balance_(node);
         }
     
-        Node* balance_(Node* node) {
-            if (!node) {
-                return node;
-            }
-            int balance = node->balance_factor();
-            if (balance > 1) {
+
+        std::shared_ptr<Node> balance_(std::shared_ptr<Node> node) {
+            int bf = node->balance_factor();
+            if (bf > 1) {
                 if (node->left_->balance_factor() < 0) {
                     node->left_ = left_rotate_(node->left_);
                 }
                 return right_rotate_(node);
-            } else if (balance < -1) {
+            }
+            if (bf < -1) {
                 if (node->right_->balance_factor() > 0) {
                     node->right_ = right_rotate_(node->right_);
                 }
@@ -240,9 +220,10 @@ class AVL{
             return node;
         }
     
-        Node* right_rotate_(Node* node) {
-            Node* y = node->left_; // b
-            Node* B = y->right_; // C
+
+        std::shared_ptr<Node> right_rotate_(std::shared_ptr<Node> node) {
+            std::shared_ptr<Node> y = node->left_; // b
+            std::shared_ptr<Node> B = y->right_; // C
 
             y->parent_ = node->parent_;
             node->parent_ = y;
@@ -250,18 +231,18 @@ class AVL{
                 B->parent_ = node;
             }
 
-
-
             y->right_ = node; // b.right = a
             node->left_ = B; // a.left = C
+            
             node->update(); // a.update()
             y->update(); // b.update()
             return y;
         }
     
-        Node* left_rotate_(Node* node) {
-            Node* y = node->right_; // b
-            Node* B = y->left_; // C
+
+        std::shared_ptr<Node> left_rotate_(std::shared_ptr<Node> node) {
+            std::shared_ptr<Node> y = node->right_; // b
+            std::shared_ptr<Node> B = y->left_; // C
 
             y->parent_ = node->parent_;
             node->parent_ = y;
@@ -271,76 +252,56 @@ class AVL{
 
             node->right_ = B; // a.right = C
             y->left_ = node; // b.left = a
+            
             node->update(); // a.update()
             y->update(); // b.update()
             return y;
         }
 
     
-        Node* remove_(Node* node, int key) {
-            if (!node) {
-                return node;
+        std::shared_ptr<Node> remove_(std::shared_ptr<Node> node, int key) {
+            if (node == nullptr) {
+                return nullptr;
             }
             if (key < node->key_) {
                 node->left_ = remove_(node->left_, key);
-                if (node->left_) {
-                    node->left_->parent_ = node;
-                }
             } else if (key > node->key_) {
                 node->right_ = remove_(node->right_, key);
-                if (node->right_) {
-                    node->right_->parent_ = node;
-                }
             } else {
-                if (!node->left_) {
-                    Node* right_child = node->right_;
-                    if (right_child) {
-                        right_child->parent_ = node->parent_;
+                if (!node->left_ || !node->right_) {
+                    auto temp = node->left_ ? node->left_ : node->right_;
+                    if (temp) {
+                        temp->parent_ = node->parent_;
                     }
-                    delete node; 
-                    return right_child;
+                    return temp;
                 }
-                if (!node->right_) {
-                    Node* left_child = node->left_;
-                    if (left_child) {
-                        left_child->parent_ = node->parent_;
-                    }
-                    delete node;
-                    return left_child;
-                }
-                Node* temp = min_node_(node->right_);
+                auto temp = min_node_(node->right_);
                 node->key_ = temp->key_;
                 node->value_ = temp->value_;
                 node->right_ = remove_(node->right_, temp->key_);
             }
             node->update();
-            Node* new_root = balance_(node);
-            if (new_root != node) {
-                new_root->parent_ = node->parent_;
-            }
-            return new_root;
+            return balance_(node);
         }
 
     
-        Node* min_node_(Node* node) {
-            Node* current = node;
-            while (current->left_) {
-                current = current->left_;
+        std::shared_ptr<Node> min_node_(std::shared_ptr<Node> node) {
+            while (node->left_) {
+                node = node->left_;
             }
-            return current;
+            return node;
         }
 
             
-        std::vector<std::string> serialize_(Node* node) {
-            if (node == nullptr) {
-                return std::vector<std::string>{"null"};
+        std::vector<std::string> serialize_(std::shared_ptr<Node> node) {
+            if (!node) {
+                return {"null"};
             }
-            std::vector<std::string> res;
-            res.push_back(std::to_string(node->key_));
-            std::vector<std::string> left_res = serialize_(node->left_);
-            std::vector<std::string> right_res = serialize_(node->right_);
-            res.insert(res.end(), left_res.begin(), left_res.end());
-            res.insert(res.end(), right_res.begin(), right_res.end());
+            std::vector<std::string> res = {std::to_string(node->key_)};
+            auto left = serialize_(node->left_);
+            auto right = serialize_(node->right_);
+            res.insert(res.end(), left.begin(), left.end());
+            res.insert(res.end(), right.begin(), right.end());
             return res;
         }
 };
